@@ -5,6 +5,10 @@ __pycache__/
 *.so
 .Python
 
+# Ignore all Python files except predict_population.py
+*.py
+!predict_population.py
+
 # Generated data files from predict_population.py
 metro_after.csv
 
