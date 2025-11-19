@@ -1,0 +1,55 @@
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Generated data files from predict_population.py
+metro_after.csv
+
+# Other generated/processed CSV files
+cities_*.csv
+cities_filtered.csv
+cities_over_1m.csv
+metro_exist.csv
+world_population*.csv
+world_population_timeseries.csv
+citycode25.csv
+largest-cities-by-population-*.csv
+
+# Generated JSON files
+cities_*.json
+cities_over_1m.json
+largest-cities-by-population-*.json
+census_data_manual.json
+
+# Backup files
+*.backup
+*.bak
+*.tmp
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Node modules (if any)
+node_modules/
+package-lock.json
+
+# Build artifacts
+dist/
+build/
+*.min.js
+*.min.css
+
+# Logs
+*.log
+
+# Data directories (if containing generated files)
+WUP2025-DB-DEGURBA-Cities-Population-Surface-Data.csv/
+

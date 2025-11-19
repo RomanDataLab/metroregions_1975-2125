@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Globe.gl Visualization - Metropolises</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+    
+    #controls {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      border-radius: 8px;
+      color: white;
+    }
+    
+    #controls h2 {
+      margin: 0 0 15px 0;
+      font-size: 18px;
+    }
+    
+    #yearDisplay {
+      font-size: 32px;
+      font-weight: bold;
+      margin: 10px 0;
+      color: #ffd700;
+    }
+    
+    #yearSlider {
+      width: 300px;
+      margin: 10px 0;
+    }
+    
+    #stats {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #ccc;
+    }
+    
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      margin: 5px 5px 5px 0;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    button:hover {
+      background: #45a049;
+    }
+    
+    button:disabled {
+      background: #666;
+      cursor: not-allowed;
+    }
+    
+    #cityPopup {
+      position: absolute;
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      pointer-events: none;
+      z-index: 2000;
+      display: none;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      min-width: 200px;
+    }
+    
+    #cityPopup.show {
+      display: block;
+    }
+    
+    #cityPopup h3 {
+      margin: 0 0 8px 0;
+      font-size: 16px;
+      color: #ffd700;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      padding-bottom: 4px;
+    }
+    
+    #cityPopup .popup-row {
+      margin: 4px 0;
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    #cityPopup .popup-label {
+      color: #ccc;
+      margin-right: 10px;
+    }
+    
+    #cityPopup .popup-value {
+      font-weight: bold;
+      color: white;
+    }
+    
+    #rankings {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      max-width: 300px;
+    }
+    
+    .ranking-panel {
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 8px;
+      color: white;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      width: 100%;
+      max-width: 300px;
+    }
+    
+    .ranking-panel.minimized {
+      max-height: 50px;
+    }
+    
+    .ranking-header {
+      padding: 12px 16px;
+      background: rgba(0, 0, 0, 0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    .ranking-header:hover {
+      background: rgba(0, 0, 0, 0.5);
+    }
+    
+    .ranking-title {
+      font-size: 13px;
+      font-weight: bold;
+      color: #ffd700;
+    }
+    
+    .minimize-icon {
+      font-size: 16px;
+      color: #ccc;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.3s ease;
+    }
+    
+    .ranking-panel.minimized .minimize-icon {
+      transform: rotate(180deg);
+    }
+    
+    .ranking-content {
+      padding: 12px 16px;
+      max-height: 500px;
+      overflow-y: auto;
+      transition: max-height 0.3s ease;
+    }
+    
+    .ranking-panel.minimized .ranking-content {
+      max-height: 0;
+      padding: 0 16px;
+      overflow: hidden;
+    }
+    
+    .ranking-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+    
+    .ranking-table th {
+      text-align: left;
+      padding: 5px 6px;
+      color: #ffd700;
+      font-size: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .ranking-table td {
+      padding: 5px 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .ranking-table tr:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .rank-number {
+      font-weight: bold;
+      color: #ffd700;
+      width: 25px;
+    }
+    
+    .country-name, .city-name {
+      font-weight: 500;
+    }
+    
+    .cities-count, .population-value {
+      text-align: right;
+      color: #ccc;
+    }
+  </style>
+
+  <!-- Globe.gl library -->
+  <script src="//cdn.jsdelivr.net/npm/globe.gl"></script>
+</head>
+
+<body>
+  <div id="controls">
+    <h2>Metropolises Over 500K Population</h2>
+    <div id="yearDisplay">1975</div>
+    <input type="range" id="yearSlider" min="0" max="150" value="0" step="1">
+    <div>
+      <button id="playBtn">Play</button>
+      <button id="pauseBtn" disabled>Pause</button>
+      <button id="resetBtn">Reset</button>
+      <button id="rotationBtn">Rotation: On</button>
+    </div>
+    <div id="stats">
+      Cities: <span id="cityCount">0</span> | 
+      Total Population: <span id="totalPop">0</span>
+    </div>
+  </div>
+  <div id="globeViz"></div>
+  <div id="cityPopup"></div>
+  
+  <div id="rankings">
+    <div class="ranking-panel" id="countriesRanking">
+      <div class="ranking-header" onclick="toggleRanking('countriesRanking')">
+        <div class="ranking-title" id="countriesTitle">Top 10 Countries with Metropolises over 1 mln by 1975</div>
+        <span class="minimize-icon">▼</span>
+      </div>
+      <div class="ranking-content">
+        <table class="ranking-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Country</th>
+              <th style="text-align: right;">Cities</th>
+            </tr>
+          </thead>
+          <tbody id="countriesRankingBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <div class="ranking-panel" id="citiesRanking">
+      <div class="ranking-header" onclick="toggleRanking('citiesRanking')">
+        <div class="ranking-title" id="citiesTitle">Top 10 Metropolises by Population by 1975</div>
+        <span class="minimize-icon">▼</span>
+      </div>
+      <div class="ranking-content">
+        <table class="ranking-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>City Name</th>
+              <th style="text-align: right;">Population</th>
+            </tr>
+          </thead>
+          <tbody id="citiesRankingBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { csvParse } from 'https://esm.sh/d3-dsv';
+    import { scaleSequentialSqrt } from 'https://esm.sh/d3-scale';
+    import { interpolateYlOrRd } from 'https://esm.sh/d3-scale-chromatic';
+
+    // Generate years array from 1975 to 2125
+    const YEARS = Array.from({length: 151}, (_, i) => 1975 + i);
+    let allData = [];
+    let allDataByYear = {}; // Store data by year for quick access
+    let cityDataMap = new Map(); // Map to store city metadata by lat/lng
+    let currentYearIndex = 0;
+    let isPlaying = false;
+    let playInterval = null;
+    const popup = document.getElementById('cityPopup');
+
+    const weightColor = scaleSequentialSqrt(interpolateYlOrRd)
+      .domain([0, 5e7]); // Updated domain for larger populations
+
+    const world = new Globe(document.getElementById('globeViz'))
+      .globeImageUrl('//cdn.jsdelivr.net/npm/three-globe/example/img/earth-night.jpg')
+      .bumpImageUrl('//cdn.jsdelivr.net/npm/three-globe/example/img/earth-topology.png')
+      .backgroundImageUrl('//cdn.jsdelivr.net/npm/three-globe/example/img/night-sky.png')
+      // City cylinders - height represents population
+      .pointsData([]) // Will be populated with city data
+      .pointAltitude(d => d.pop * 5e-8) // Height proportional to population (scaled, reduced by 2x total)
+      .pointRadius(0.4) // Base radius of cylinders
+      .pointColor(d => weightColor(d.pop)) // Color based on population
+      .pointResolution(6) // Cylinder resolution (sides)
+      .pointsTransitionDuration(500)
+      .enablePointerInteraction(true)
+      .onPointHover(handlePointHover)
+      .onPointClick(handlePointClick)
+      // Add country borders/contours
+      .polygonsData([]) // Will be populated with country data
+      .polygonAltitude(0.01) // Slight elevation for borders
+      .polygonCapColor(() => 'rgba(100, 150, 200, 0.2)') // Light blue fill
+      .polygonSideColor(() => 'rgba(100, 150, 200, 0.4)') // Border color
+      .polygonStrokeColor(() => 'rgba(150, 200, 255, 0.7)') // Border outline
+      .polygonsTransitionDuration(300);
+
+    // Add auto-rotation
+    world.controls().autoRotate = true;
+    world.controls().autoRotateSpeed = 0.6;
+
+    // Load country borders GeoJSON data
+    fetch('https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson')
+      .then(res => res.json())
+      .then(countries => {
+        // Transform GeoJSON to format expected by Globe.gl
+        const countryPolygons = countries.features.map(feature => ({
+          geometry: feature.geometry,
+          properties: feature.properties
+        }));
+        
+        world.polygonsData(countryPolygons);
+        console.log(`Loaded ${countryPolygons.length} country borders`);
+      })
+      .catch(err => {
+        console.warn('Could not load country borders from primary source:', err);
+        // Try alternative source - Natural Earth data
+        fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json')
+          .then(res => res.json())
+          .then(data => {
+            const countryPolygons = data.features.map(feature => ({
+              geometry: feature.geometry,
+              properties: feature.properties
+            }));
+            world.polygonsData(countryPolygons);
+            console.log(`Loaded ${countryPolygons.length} country borders from alternative source`);
+          })
+          .catch(err2 => {
+            console.error('Failed to load country borders:', err2);
+          });
+      });
+
+    // Load metro_after.csv and transform data
+    fetch('metro_after.csv')
+      .then(res => {
+        if (!res.ok) {
+          throw new Error('Failed to load metro_after.csv');
+        }
+        return res.text();
+      })
+      .then(csv => {
+        const rows = csvParse(csv);
+        
+        // Transform data: extract lat/lng and all Pop_ columns
+        allData = [];
+        
+        rows.forEach(row => {
+          const lat = parseFloat(row.PWCent_Latitude);
+          const lng = parseFloat(row.PWCent_Longitude);
+          
+          // Skip if lat/lng are invalid
+          if (isNaN(lat) || isNaN(lng)) return;
+          
+          // Create a key for this city location
+          const cityKey = `${lat.toFixed(4)}_${lng.toFixed(4)}`;
+          
+          // Store city metadata
+          cityDataMap.set(cityKey, {
+            cityName: row.City_Name || '',
+            country: row.Location || '',
+            areaKm2: parseFloat(row.AREA_km2_1Jan) || parseFloat(row.AREA_km2) || 0,
+            cityCode: row.City_Code || ''
+          });
+          
+          // Extract population for each year from Pop_ columns
+          YEARS.forEach(year => {
+            const popCol = `Pop_${year}`;
+            const popValue = parseFloat(row[popCol]);
+            
+            // Skip if population is invalid or 0
+            if (isNaN(popValue) || popValue <= 0) return;
+            
+            // Convert from thousands to actual population
+            const pop = popValue * 1000;
+            
+            allData.push({
+              lat: lat,
+              lng: lng,
+              year: year,
+              pop: pop,
+              cityName: row.City_Name || '',
+              cityCode: row.City_Code || '',
+              cityKey: cityKey // Add key for lookup
+            });
+            
+            // Also store in a year-based structure for quick lookup
+            if (!allDataByYear[year]) {
+              allDataByYear[year] = [];
+            }
+            allDataByYear[year].push({
+              lat: lat,
+              lng: lng,
+              year: year,
+              pop: pop,
+              cityName: row.City_Name || '',
+              cityCode: row.City_Code || '',
+              cityKey: cityKey
+            });
+          });
+        });
+        
+        console.log(`Loaded ${rows.length} cities with data for ${YEARS.length} years`);
+        console.log(`Total data points: ${allData.length}`);
+        
+        // Initialize with first year (1975)
+        updateYear(0);
+      })
+      .catch(err => {
+        console.error('Error loading metro_after.csv:', err);
+      });
+
+    // Handle point (cylinder) hover
+    function handlePointHover(point, prevPoint) {
+      if (point) {
+        const cityInfo = cityDataMap.get(point.cityKey) || {};
+        showPopup({
+          cityName: point.cityName || cityInfo.cityName || 'Unknown',
+          country: cityInfo.country || 'Unknown',
+          population: point.pop,
+          year: point.year,
+          areaKm2: cityInfo.areaKm2 || 0
+        });
+      } else {
+        hidePopup();
+      }
+    }
+    
+    // Handle point (cylinder) click (optional)
+    function handlePointClick(point) {
+      // Can add click functionality if needed
+      console.log('Clicked on city:', point.cityName);
+    }
+    
+    // Show popup with city information
+    function showPopup(info) {
+      popup.innerHTML = `
+        <h3>${info.cityName}</h3>
+        <div class="popup-row">
+          <span class="popup-label">Country:</span>
+          <span class="popup-value">${info.country}</span>
+        </div>
+        <div class="popup-row">
+          <span class="popup-label">Population:</span>
+          <span class="popup-value">${formatPopulation(info.population)}</span>
+        </div>
+        <div class="popup-row">
+          <span class="popup-label">Year:</span>
+          <span class="popup-value">${info.year}</span>
+        </div>
+        <div class="popup-row">
+          <span class="popup-label">Area:</span>
+          <span class="popup-value">${info.areaKm2 > 0 ? info.areaKm2.toFixed(1) + ' km²' : 'N/A'}</span>
+        </div>
+      `;
+      popup.classList.add('show');
+      updatePopupPosition();
+    }
+    
+    // Hide popup
+    function hidePopup() {
+      popup.classList.remove('show');
+    }
+    
+    // Format population number
+    function formatPopulation(pop) {
+      if (pop >= 1e6) {
+        return (pop / 1e6).toFixed(2) + 'M';
+      } else if (pop >= 1e3) {
+        return (pop / 1e3).toFixed(0) + 'K';
+      }
+      return pop.toLocaleString();
+    }
+    
+    // Track mouse position globally for popup positioning
+    let mouseX = 0;
+    let mouseY = 0;
+    
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      updatePopupPosition();
+    });
+    
+    // Update popup position based on stored mouse coordinates
+    function updatePopupPosition() {
+      if (popup.classList.contains('show')) {
+        const offset = 15;
+        popup.style.left = (mouseX + offset) + 'px';
+        popup.style.top = (mouseY + offset) + 'px';
+        
+        // Keep popup within viewport
+        const rect = popup.getBoundingClientRect();
+        if (rect.right > window.innerWidth) {
+          popup.style.left = (mouseX - rect.width - offset) + 'px';
+        }
+        if (rect.bottom > window.innerHeight) {
+          popup.style.top = (mouseY - rect.height - offset) + 'px';
+        }
+      }
+    }
+    
+    // Hide popup when mouse leaves globe
+    const globeElement = document.getElementById('globeViz');
+    globeElement.addEventListener('mouseleave', () => {
+      setTimeout(() => {
+        hidePopup();
+      }, 100);
+    });
+
+    function updateYear(yearIndex) {
+      if (yearIndex < 0 || yearIndex >= YEARS.length) return;
+      
+      currentYearIndex = yearIndex;
+      const year = YEARS[yearIndex];
+      
+      // Get data for current year with all city information
+      const yearData = allDataByYear[year] || allData
+        .filter(d => d.year === year && d.pop > 0)
+        .map(d => ({
+          lat: d.lat,
+          lng: d.lng,
+          pop: d.pop,
+          cityName: d.cityName,
+          cityCode: d.cityCode,
+          cityKey: d.cityKey,
+          year: d.year
+        }));
+      
+      // Update globe with cylinder points
+      world.pointsData(yearData);
+      
+      document.getElementById('yearDisplay').textContent = year;
+      document.getElementById('yearSlider').value = yearIndex;
+      
+      const cityCount = yearData.length;
+      const totalPop = yearData.reduce((sum, d) => sum + d.pop, 0);
+      document.getElementById('cityCount').textContent = cityCount.toLocaleString();
+      // Format population: show in millions if > 1M, otherwise in thousands
+      const formattedPop = totalPop >= 1e6 
+        ? (totalPop / 1e6).toFixed(2) + 'M'
+        : (totalPop / 1e3).toFixed(0) + 'K';
+      document.getElementById('totalPop').textContent = formattedPop;
+      
+      // Update rankings
+      updateRankings(year);
+    }
+    
+    // Toggle ranking panel minimize/expand
+    window.toggleRanking = function(panelId) {
+      const panel = document.getElementById(panelId);
+      panel.classList.toggle('minimized');
+    };
+    
+    // Format population for display
+    function formatPopulationDisplay(pop) {
+      if (pop >= 1e6) {
+        return (pop / 1e6).toFixed(2) + 'M';
+      } else if (pop >= 1e3) {
+        return (pop / 1e3).toFixed(1) + 'K';
+      }
+      return pop.toLocaleString();
+    }
+    
+    // Update country rankings (Top 10 countries with metropolises over 1M)
+    function updateCountryRankings(year) {
+      const yearData = allDataByYear[year] || allData.filter(d => d.year === year && d.pop > 0);
+      
+      // Filter cities with population over 1M
+      const citiesOver1M = yearData.filter(d => d.pop >= 1000000);
+      
+      // Group by country and count cities
+      const countryCounts = new Map();
+      citiesOver1M.forEach(city => {
+        const cityInfo = cityDataMap.get(city.cityKey) || {};
+        const country = cityInfo.country || 'Unknown';
+        
+        if (!countryCounts.has(country)) {
+          countryCounts.set(country, 0);
+        }
+        countryCounts.set(country, countryCounts.get(country) + 1);
+      });
+      
+      // Convert to array and sort by count (descending)
+      const countryRankings = Array.from(countryCounts.entries())
+        .map(([country, count]) => ({ country, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10); // Top 10
+      
+      // Update title
+      document.getElementById('countriesTitle').textContent = 
+        `Top 10 Countries with Metropolises over 1 mln by ${year}`;
+      
+      // Update table
+      const tbody = document.getElementById('countriesRankingBody');
+      tbody.innerHTML = countryRankings.map((item, index) => `
+        <tr>
+          <td class="rank-number">${index + 1}</td>
+          <td class="country-name">${item.country}</td>
+          <td class="cities-count">${item.count}</td>
+        </tr>
+      `).join('');
+    }
+    
+    // Update city rankings (Top 10 metropolises by population)
+    function updateCityRankings(year) {
+      const yearData = allDataByYear[year] || allData.filter(d => d.year === year && d.pop > 0);
+      
+      // Sort by population (descending) and take top 10
+      const cityRankings = yearData
+        .map(city => ({
+          cityName: city.cityName || 'Unknown',
+          population: city.pop
+        }))
+        .sort((a, b) => b.population - a.population)
+        .slice(0, 10); // Top 10
+      
+      // Update title
+      document.getElementById('citiesTitle').textContent = 
+        `Top 10 Metropolises by Population by ${year}`;
+      
+      // Update table
+      const tbody = document.getElementById('citiesRankingBody');
+      tbody.innerHTML = cityRankings.map((item, index) => `
+        <tr>
+          <td class="rank-number">${index + 1}</td>
+          <td class="city-name">${item.cityName}</td>
+          <td class="population-value">${formatPopulationDisplay(item.population)}</td>
+        </tr>
+      `).join('');
+    }
+    
+    // Update all rankings for a given year
+    function updateRankings(year) {
+      updateCountryRankings(year);
+      updateCityRankings(year);
+    }
+
+    document.getElementById('yearSlider').addEventListener('input', (e) => {
+      if (!isPlaying) {
+        updateYear(parseInt(e.target.value));
+      }
+    });
+
+    document.getElementById('playBtn').addEventListener('click', () => {
+      isPlaying = true;
+      document.getElementById('playBtn').disabled = true;
+      document.getElementById('pauseBtn').disabled = false;
+      
+      playInterval = setInterval(() => {
+        let nextIndex = currentYearIndex + 1;
+        if (nextIndex >= YEARS.length) {
+          nextIndex = 0;
+        }
+        updateYear(nextIndex);
+      }, 1000);
+    });
+
+    document.getElementById('pauseBtn').addEventListener('click', () => {
+      isPlaying = false;
+      document.getElementById('playBtn').disabled = false;
+      document.getElementById('pauseBtn').disabled = true;
+      
+      if (playInterval) {
+        clearInterval(playInterval);
+        playInterval = null;
+      }
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      if (playInterval) {
+        clearInterval(playInterval);
+        playInterval = null;
+      }
+      isPlaying = false;
+      document.getElementById('playBtn').disabled = false;
+      document.getElementById('pauseBtn').disabled = true;
+      updateYear(0);
+    });
+
+    // Rotation toggle button event handler
+    let rotationEnabled = true;
+    document.getElementById('rotationBtn').addEventListener('click', () => {
+      rotationEnabled = !rotationEnabled;
+      world.controls().autoRotate = rotationEnabled;
+      
+      const rotationBtn = document.getElementById('rotationBtn');
+      if (rotationEnabled) {
+        rotationBtn.textContent = 'Rotation: On';
+      } else {
+        rotationBtn.textContent = 'Rotation: Off';
+      }
+    });
+  </script>
+</body>
+</html>
+
