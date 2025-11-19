@@ -9,9 +9,6 @@ __pycache__/
 *.py
 !predict_population.py
 
-# Generated data files from predict_population.py
-metro_after.csv
-
 # Other generated/processed CSV files
 cities_*.csv
 cities_filtered.csv
