@@ -44,6 +44,27 @@
       color: #ccc;
     }
     
+    #dataSource {
+      margin-top: 8px;
+      font-size: 8.25px;
+      color: #999;
+      font-style: italic;
+      line-height: 1.4;
+      width: 100%;
+      max-width: 100%;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+    
+    #dataSource a {
+      color: #4CAF50;
+      text-decoration: underline;
+    }
+    
+    #dataSource a:hover {
+      color: #45a049;
+    }
+    
     button {
       background: #4CAF50;
       color: white;
@@ -234,6 +255,15 @@
     <div id="stats">
       Cities: <span id="cityCount">0</span> | 
       Total Population: <span id="totalPop">0</span>
+      <div id="dataSource">
+        Data source: UN_WUP2025_DEGURBA, United Nations, 
+        <br>Department of Economic and Social Affairs, Population Division (2024). 
+        <br>World Urbanization Prospects 2025. New York: United Nations.<br>
+        <a href="https://population.un.org/wup" target="_blank">https://population.un.org/wup</a>
+        <br>Prediction until 2125 by RealDataTalks 
+        <br>- ML model (age-structured cohort-component model with scenario-based assumptions 
+        <br> (fertility, mortality, migration) + probabilistic uncertainty (stochastic runs or Bayesian))<br>
+      </div>
     </div>
   </div>
   <div id="globeViz"></div>
