@@ -51,6 +51,12 @@ build/
 # Logs
 *.log
 
+# Project documentation
+graph.md
+
+# Video/recording files
+1763591170589/
+
 # Data directories (if containing generated files)
 WUP2025-DB-DEGURBA-Cities-Population-Surface-Data.csv/
 

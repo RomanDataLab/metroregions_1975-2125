@@ -1,6 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- GTM --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({"gtm.start":
+new Date().getTime(),event:"gtm.js"});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!="dataLayer"?"&l="+l:"";j.async=true;j.src=
+"https://www.googletagmanager.com/gtm.js?id="+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,"script","dataLayer","GTM-538VHG6H");</script>
+<!-- GA4 [RDT-MES1-11] --><script async src="https://www.googletagmanager.com/gtag/js?id=G-2E348VSQ5G"></script>
+<script>
+window.dataLayer=window.dataLayer||[];
+function gtag(){dataLayer.push(arguments);}
+gtag("js",new Date());
+gtag("config","G-2E348VSQ5G",{
+  custom_map:{"dimension1":"project_name","dimension2":"page_module","dimension3":"user_type","dimension4":"stream_id"},
+  project_name:"metroregions-1975-2125",
+  stream_id:"RDT-MES1-11",
+  page_module:document.title.split("—")[0].trim()||"unknown",
+  user_type:(location.search.includes("mode=client")?"client":"ops")
+});
+</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Globe.gl Visualization - Metropolises</title>
@@ -235,6 +253,67 @@
       text-align: right;
       color: #ccc;
     }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      #controls {
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        padding: 12px;
+        max-width: calc(100% - 20px);
+        box-sizing: border-box;
+      }
+
+      #controls h2 {
+        font-size: 14px;
+        margin: 0 0 8px 0;
+      }
+
+      #yearDisplay {
+        font-size: 24px;
+      }
+
+      #yearSlider {
+        width: 100%;
+      }
+
+      button {
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+
+      #stats {
+        font-size: 12px;
+      }
+
+      #rankings {
+        position: static;
+        max-width: 100%;
+        padding: 10px;
+        margin-top: 0;
+      }
+
+      .ranking-panel {
+        max-width: 100%;
+      }
+
+      .ranking-panel.minimized {
+        max-height: 40px;
+      }
+
+      .ranking-title {
+        font-size: 11px;
+      }
+
+      .ranking-table {
+        font-size: 10px;
+      }
+
+      #cityPopup {
+        display: none !important;
+      }
+    }
   </style>
 
   <!-- Globe.gl library -->
@@ -242,6 +321,7 @@
 </head>
 
 <body>
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-538VHG6H" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div id="controls">
     <h2>Metropolises Over 500K Population</h2>
     <div id="yearDisplay">1975</div>
